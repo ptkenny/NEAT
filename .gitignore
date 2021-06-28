@@ -1,3 +1,4 @@
 NEAT_paper.pdf
 .vscode
 __pycache__
+tests/__pycache__

@@ -73,16 +73,14 @@ class Neat:
         first_fitness = self.calculate_fitness(first)
         total_fitness = first_fitness + self.calculate_fitness(second)
         first_inherit_prob = first_fitness / total_fitness
-        new_connections: set = set(self._determine_gene(first, second, x, first_inherit_prob) for x in range(1, self.innovation_number + 1))        
-        if None in new_connections:
-            new_connections.remove(None)
+        new_connections: set = set(self._determine_gene(first, second, x, first_inherit_prob) for x in range(1, self.innovation_number + 1) if first.has_connection(x) or second.has_connection(x))
         return Genome(self.num_inputs, self.num_outputs, connections=new_connections)
 
 
     def _determine_gene(self, first: Genome, second: Genome, innovation: int, first_inherit_prob: float):
         connection = None
         if first.has_connection(innovation) and second.has_connection(innovation):
-            if RNG.should_inherit_average_weight():
+            if RNG.should_inherit_average_weight:
                 connection = self._calculate_connection_enabled(first.get_connection(innovation), other_enabled=second.get_connection(innovation).enabled)
                 connection.weight = (first.get_connection(innovation).weight + second.get_connection(innovation).weight) / 2.0
             else: 
@@ -104,13 +102,13 @@ class Neat:
 
 
     def mutate(self, genome: Genome) -> Genome:
-        if RNG.should_weights_change():
+        if RNG.should_weights_change:
             self._mutate_connections(genome)
 
 
     def _mutate_connections(self, genome: Genome) -> None:
         for connection in genome.connections:
-            if RNG.should_weights_be_perturbed():
+            if RNG.should_weights_be_perturbed:
                 connection.weight += random.gauss(0, 1)
             else:
                 connection.weight = random.random() * 2 - 1
