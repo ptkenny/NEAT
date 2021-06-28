@@ -1,16 +1,19 @@
 import random
 
+
 class RNG:
+
+    AVERAGE_WEIGHT_INHERITANCE_PROBABILITY = 0.4
+    DISABLED_CONNECTION_INHERITANCE_PROBABILITY = 0.75
+    WEIGHT_CHANGE_PROBABILITY = 0.8
+    NORMAL_WEIGHT_CHANGE_PROBABILITY = 0.9
+
 
     @staticmethod
     def set_probabilities(probabilities: dict[str, float]):
         # TODO: Define this function properly.
         pass
 
-    AVERAGE_WEIGHT_INHERITANCE_PROBABILITY = 0.4
-    DISABLED_CONNECTION_INHERITANCE_PROBABILITY = 0.75
-    WEIGHT_CHANGE_PROBABILITY = 0.8
-    NORMAL_WEIGHT_CHANGE_PROBABILITY = 0.9
 
     @property
     def should_inherit_average_weight() -> bool:

@@ -1,6 +1,5 @@
 import activations
 from connection import Connection
-import numpy as np
 
 
 class Genome:
@@ -32,14 +31,17 @@ class Genome:
             self.connections = connections
         self.fitness = 0
 
+
     def has_connection(self, innovation_number: int):
         return any(con.innovation_id == innovation_number for con in self.connections)
+
 
     def get_connection(self, id: int):
         for con in self.connections:
             if con.innovation_id == id:
                 return con
         return None
+
 
     def feed_forward(self, inputs: list[float]) -> list[float]:
         all_nodes = [y for x in self.nodes.values() for y in x]
@@ -53,7 +55,3 @@ class Genome:
                 result = activations.tanh(sum(outputs[con.first]))
                 outputs[con.second].append(result)
         return [activations.tanh(sum(outputs[x])) for x in self.nodes["outputs"]]
-
-
-if __name__ == "__main__":
-    g = Genome(2, 1, set())
