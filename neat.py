@@ -68,15 +68,21 @@ class Neat:
         first_inherit_prob = first_fitness / total_fitness
         new_connections: set = set()
         for x in range(1, self.innovation_number + 1):
+            connection = None
             if first.has_connection(x) and second.has_connection(x):
-                if random.random() < first_inherit_prob:
-                    new_connections.add(self._calculate_connection_enabled(first.get_connection(x), other_enabled=second.get_connection(x).enabled))
-                else:
-                    new_connections.add(self._calculate_connection_enabled(second.get_connection(x), other_enabled=first.get_connection(x).enabled))
+                if random.random() < config.AVERAGE_WEIGHT_INHERITANCE_PROBABILITY:
+                    connection = self._calculate_connection_enabled(first.get_connection(x), other_enabled=second.get_connection(x).enabled)
+                    connection.weight = (first.get_connection(x).weight + second.get_connection(x).weight) / 2.0
+                else: 
+                    if random.random() < first_inherit_prob:
+                        connection = self._calculate_connection_enabled(first.get_connection(x), other_enabled=second.get_connection(x).enabled)
+                    else:
+                        connection = self._calculate_connection_enabled(second.get_connection(x), other_enabled=first.get_connection(x).enabled)
             elif first.has_connection(x):
-                new_connections.add(new_connections.add(self._calculate_connection_enabled(first.get_connection(x))))
+                connection = self._calculate_connection_enabled(first.get_connection(x))
             elif second.has_connection(x):
-                new_connections.add(new_connections.add(self._calculate_connection_enabled(second.get_connection(x))))
+                connection = self._calculate_connection_enabled(second.get_connection(x))
+            if connection is not None: new_connections.add(connection)
         return Genome(self.num_inputs, self.num_outputs, connections=new_connections)
 
     def _calculate_connection_enabled(self, connection: Connection, other_enabled: bool=False) -> Connection:
@@ -85,9 +91,9 @@ class Neat:
         return new_connection
 
     def mutate(self, genome: Genome) -> Genome:
+        # If the weights of the genome should change
         if random.random() < config.WEIGHT_CHANGE_PROBABILITY:
             self._mutate_connections(genome)
-            pass
 
     def _mutate_connections(self, genome: Genome) -> None:
         for connection in genome.connections:
