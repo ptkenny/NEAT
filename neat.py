@@ -21,17 +21,46 @@ class Neat:
         population_size: int,
         fitness_function: Callable=lambda x: x,
     ) -> None:
-        self.species = []
         self.num_inputs = num_inputs
         self.num_outputs = num_outputs
         self.population_size = population_size
         self.population = [Genome(num_inputs, num_outputs) for _ in range(self.population_size)]
         self.fitness_function = fitness_function
+        self.species = [[self.population[0]]]
 
 
     def create_generation(self):
-        pass
+        total_average_fitness = 0.0
+        genomes_per_species = {}
 
+        for genome in self.population:
+            genome.fitness = self.fitness_function(genome)
+            total_average_fitness += genome.fitness
+        for top_of_species in self.species:
+            top_of_species.sort(key=lambda genome: genome.fitness)
+            genomes_per_species.update({(sum(s / len(top_of_species) for s in top_of_species) / total_average_fitness): top_of_species[:top_of_species[:int(len(top_of_species) * config.TOP_SPECIES_PERCENT)]]})
+        
+        new_population = []
+        for crossover_per_species, top_of_species in genomes_per_species.items():
+            for x in range(crossover_per_species):
+                first_genome, second_genome = random.choices(top_of_species, k=2)
+                new_population.append(self.mutate(self.cross_over(first_genome, second_genome)))
+        
+        
+
+
+    def separate_species(self):
+        for genome in self.population:
+            for species in self.species:
+                random_genome = random.choice(species)
+                if self.calculate_distance(genome, random_genome) < config.COMPATABILITY_DISTANCE_THRESHOLD:
+                    species.append(genome)
+
+        if len(self.species) is not config.TARGET_SPECIES_SIZE:
+            config.TARGET_SPECIES_SIZE += config.THRESHOLD_DELTA * (1 if len(self.species) > config.TARGET_SPECIES_SIZE else -1)            
+
+                
+        
 
     def create_node(self):
         Neat.node_number += 1
@@ -48,7 +77,8 @@ class Neat:
 
 
     def calculate_fitness(self, genome: Genome) -> float:
-        return self.fitness_function(genome)
+        genome.fitness = self.fitness_function(genome)
+        return genome.fitness
 
 
     def calculate_distance(self, first: Genome, second: Genome) -> float:
@@ -97,18 +127,39 @@ class Neat:
 
     def _calculate_connection_enabled(self, connection: Connection, other_enabled: bool=False) -> Connection:
         new_connection = connection.copy()
-        new_connection.enabled = (not other_enabled or not connection.enabled) and RNG.should_disabled_connection_be_inherited()
+        new_connection.enabled = (not other_enabled or not connection.enabled) and RNG.should_disabled_connection_be_inherited
         return new_connection
 
 
     def mutate(self, genome: Genome) -> Genome:
         if RNG.should_weights_change:
             self._mutate_connections(genome)
+        return genome
 
 
     def _mutate_connections(self, genome: Genome) -> None:
         for connection in genome.connections:
             if RNG.should_weights_be_perturbed:
-                connection.weight += random.gauss(0, 1)
+                connection.weight += random.gauss(0, 0.5)
             else:
                 connection.weight = random.random() * 2 - 1
+        
+        if RNG.should_connection_be_added:
+            node_list = genome.get_node_list()
+            nodes = random.choices(node_list, k=2)
+            
+            while not self._is_valid_connection(genome, *nodes):
+                nodes = random.choices(node_list, k=2)
+
+            genome.connections.add(self.create_connection(nodes, random.random() * 2 - 1))
+        
+        if RNG.should_node_be_added:
+            if len(genome.connections) is 0: return
+            connection_to_split = random.choice(genome.connections)
+            connection_to_split.enabled = False
+            new_node = self.create_node()
+            genome.connections.add(self.create_connection((connection_to_split.first, new_node), 1.0))
+            genome.connections.add(self.create_connection((new_node, connection_to_split.second), connection_to_split.weight))
+
+    def _is_valid_connection(self, genome: Genome, first_node: int, second_node: int):
+        return (first_node in genome.nodes["inputs"] and (second_node in genome.nodes["hidden"] or second_node in genome.nodes["output"])) or (first_node in genome.nodes["hidden"] and second_node in genome.nodes["output"])

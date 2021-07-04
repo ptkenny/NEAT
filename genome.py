@@ -55,3 +55,6 @@ class Genome:
                 result = activations.tanh(sum(outputs[con.first]))
                 outputs[con.second].append(result)
         return [activations.tanh(sum(outputs[x])) for x in self.nodes["outputs"]]
+    
+    def get_node_list(self) -> list[int]:
+        return [y for x in self.nodes.values() for y in x]
