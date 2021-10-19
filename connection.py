@@ -10,16 +10,13 @@ class Connection:
         self.innovation_id = innovation_id
 
     def copy(self) -> "Connection":
-        con = Connection()
-        con.first = self.first
-        con.second = self.second
-        con.weight = self.weight
-        con.enabled = self.enabled
-        con.innovation_id = self.innovation_id
-        return con
+        return Connection(self.first, self.second, self.weight, self.enabled, self.innovation_id)
 
     def __str__(self) -> str:
-        return "{} --> {}, weight: {}".format(self.first, self.second, self.weight)
+        return "{} --> {}, weight: {}, enabled: {}, innovation_id: {}".format(self.first, self.second, self.weight, self.enabled, self.innovation_id)
 
     def __hash__(self) -> int:
         return hash(self.innovation_id)
+
+    def __eq__(self, other):
+        return self.innovation_id == other.innovation_id
